@@ -40,7 +40,7 @@ cats_dogs_mlops/
 │ └── models/
 │ └── logistic_model.pkl # Model for inference service
 └── .gitignore # Git exclusions
-
+```
 
 ##  Quick Start Guide
 
