@@ -36,7 +36,7 @@ jobs:
 
     - name: Deploy using Docker Compose
       run: |
-        docker-compose up -d --build
+        docker compose up -d --build
 
     - name: Smoke Test
       run: |
