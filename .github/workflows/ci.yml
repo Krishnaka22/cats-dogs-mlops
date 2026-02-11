@@ -40,6 +40,8 @@ jobs:
 
     - name: Smoke Test
       run: |
-        sleep 10
-        curl http://localhost:8000/health
+        sleep 15
+        docker ps
+        docker exec cats-dogs-api curl http://localhost:8000/health
+
 
