@@ -33,3 +33,13 @@ jobs:
       run: |
         cd inference_service
         docker build -t cats-dogs-api:test .
+
+    - name: Deploy using Docker Compose
+      run: |
+        docker-compose up -d --build
+
+    - name: Smoke Test
+      run: |
+        sleep 10
+        curl http://localhost:8000/health
+
