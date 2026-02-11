@@ -19,10 +19,6 @@ jobs:
       with:
         python-version: '3.9'
 
-    - name: Install root dependencies
-      run: |
-        pip install -r requirements.txt
-
     - name: Install inference service dependencies
       run: |
         cd inference_service
@@ -37,4 +33,3 @@ jobs:
       run: |
         cd inference_service
         docker build -t cats-dogs-api:test .
-
