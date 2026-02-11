@@ -1,0 +1,40 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+
+    - name: Install root dependencies
+      run: |
+        pip install -r requirements.txt
+
+    - name: Install inference service dependencies
+      run: |
+        cd inference_service
+        pip install -r requirements.txt
+
+    - name: Run API tests
+      run: |
+        cd inference_service
+        pytest test_api.py
+
+    - name: Build Docker image
+      run: |
+        cd inference_service
+        docker build -t cats-dogs-api:test .
+
