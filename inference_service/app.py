@@ -1,5 +1,6 @@
 """
 FastAPI inference service for cats vs dogs classification
+Includes Monitoring & Model Performance Tracking (M5)
 """
 
 import time
@@ -23,15 +24,20 @@ logger = logging.getLogger("cats_dogs_api")
 # --------------------------------------------------
 app = FastAPI(
     title="Cats vs Dogs Classification API",
-    description="MLOps Assignment - Model Packaging & Monitoring",
-    version="1.1.0"
+    description="MLOps Assignment - Model Packaging, Monitoring & Evaluation",
+    version="1.2.0"
 )
 
 # --------------------------------------------------
-# Monitoring Variables (M5 Requirement)
+# Monitoring Variables (M5 Part 1)
 # --------------------------------------------------
 request_count = 0
 total_latency = 0.0
+
+# --------------------------------------------------
+# Model Performance Tracking (M5 Part 2)
+# --------------------------------------------------
+evaluation_records = []
 
 # --------------------------------------------------
 # Load Model
@@ -89,6 +95,10 @@ class HealthResponse(BaseModel):
     timestamp: str
     message: str
 
+class EvaluationRequest(BaseModel):
+    pixels: List[float]
+    true_label: int  # 0 = cat, 1 = dog
+
 # --------------------------------------------------
 # Routes
 # --------------------------------------------------
@@ -102,6 +112,7 @@ async def root():
             "predict": "/predict (POST)",
             "batch_predict": "/batch_predict (POST)",
             "metrics": "/metrics (GET)",
+            "evaluate": "/evaluate (POST)",
             "docs": "/docs"
         }
     }
@@ -186,7 +197,7 @@ async def batch_predict(batch_request: BatchPredictionRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 # --------------------------------------------------
-# Metrics Endpoint (M5 Requirement)
+# Metrics Endpoint (Monitoring)
 # --------------------------------------------------
 @app.get("/metrics")
 async def metrics():
@@ -195,6 +206,43 @@ async def metrics():
     return {
         "request_count": request_count,
         "average_latency_seconds": round(avg_latency, 4),
+        "timestamp": datetime.now().isoformat()
+    }
+
+# --------------------------------------------------
+# Evaluation Endpoint (Model Performance Tracking)
+# --------------------------------------------------
+@app.post("/evaluate")
+async def evaluate_model(data: EvaluationRequest):
+
+    if model is None:
+        raise HTTPException(status_code=503, detail="Model not loaded")
+
+    pixels_array = np.array(data.pixels).reshape(1, -1)
+
+    if pixels_array.shape[1] != model.n_features_in_:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Expected {model.n_features_in_} features"
+        )
+
+    prediction = model.predict(pixels_array)[0]
+
+    evaluation_records.append({
+        "prediction": int(prediction),
+        "true_label": int(data.true_label)
+    })
+
+    correct = sum(
+        1 for record in evaluation_records
+        if record["prediction"] == record["true_label"]
+    )
+
+    accuracy = correct / len(evaluation_records)
+
+    return {
+        "total_samples": len(evaluation_records),
+        "current_accuracy": round(accuracy, 4),
         "timestamp": datetime.now().isoformat()
     }
 
